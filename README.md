@@ -27,6 +27,17 @@ Distritos (isla de 34×34 tiles):
 - **Industria** al sur, junto al **puerto** (lógica logística).
 - **Cementerio** en la periferia noreste.
 
+## Multi-mundo con portales
+
+Arrancás en la **Ciudad**. Pisando un portal viajás a otros mundos:
+- 🟣 **Mundo Pirata** (portal en el muelle del puerto): isla en el océano,
+  palmeras, torre, props pirata y **barcos navegando**. Portal de vuelta.
+- 🟢 **Mundo Fantasy** (portal en el bosque): **castillo** (torres + murallas
+  + portón), aldea con fuente medieval y casas, **bosque** denso y entrada a
+  **mazmorra**. Portal de vuelta.
+
+![fantasy](docs/world-fantasy.png)
+
 ## Qué hay hasta ahora
 
 - **Movimiento**: **WASD/flechas** (relativo a cámara) **y click** para

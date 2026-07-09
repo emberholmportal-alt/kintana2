@@ -106,6 +106,43 @@ export const MODELS = {
     camp: g('assets/survival', ['campfire-pit', 'campfire-stand', 'chest', 'barrel', 'box', 'box-large', 'resource-wood', 'resource-planks', 'signpost']),
     tent: g('assets/survival', ['structure-canvas']),
   },
+
+  // --- Mini Arcade (salón recreativo, con la ruleta) ---
+  arcade: {
+    floor: 'assets/arcade/floor.glb', wall: 'assets/arcade/wall.glb', wallWindow: 'assets/arcade/wall-window.glb', wallDoor: 'assets/arcade/wall-door-rotate.glb', wallCorner: 'assets/arcade/wall-corner.glb',
+    wheel: 'assets/arcade/prize-wheel.glb',
+    machine: g('assets/arcade', ['arcade-machine', 'claw-machine', 'pinball', 'dance-machine', 'air-hockey', 'basketball-game', 'gambling-machine', 'vending-machine']),
+    cash: 'assets/arcade/cash-register.glb', prizes: 'assets/arcade/prizes.glb',
+  },
+
+  // --- Fantasy Town (mundo fantasy: aldea) ---
+  fantasy: {
+    fountain: g('assets/fantasy', ['fountain-round', 'fountain-round-detail']), fountainCenter: 'assets/fantasy/fountain-center.glb',
+    hedge: g('assets/fantasy', ['hedge', 'hedge-large', 'hedge-curved']), hedgeGate: 'assets/fantasy/hedge-gate.glb',
+    cart: g('assets/fantasy', ['cart', 'cart-high']), lantern: 'assets/fantasy/lantern.glb',
+    pillar: g('assets/fantasy', ['pillar-stone', 'pillar-wood']), banner: g('assets/fantasy', ['banner-red', 'banner-green']),
+    wall: 'assets/fantasy/wall.glb', wallDoor: 'assets/fantasy/wall-door.glb', wallWindow: 'assets/fantasy/wall-window-shutters.glb',
+    roof: 'assets/fantasy/roof-gable.glb', roofTop: 'assets/fantasy/roof-gable-top.glb', chimney: 'assets/fantasy/chimney.glb',
+    fence: 'assets/fantasy/fence.glb', fenceGate: 'assets/fantasy/fence-gate.glb',
+  },
+
+  // --- Castle (mundo fantasy: castillo) ---
+  castle: {
+    towerBase: 'assets/castle/tower-square-base.glb', towerMid: 'assets/castle/tower-square-mid-windows.glb', towerTop: 'assets/castle/tower-square-top-roof.glb',
+    hexBase: 'assets/castle/tower-hexagon-base.glb', hexMid: 'assets/castle/tower-hexagon-mid.glb', hexTop: 'assets/castle/tower-hexagon-roof.glb',
+    wall: 'assets/castle/wall.glb', wallCorner: 'assets/castle/wall-corner.glb', wallDoorway: 'assets/castle/wall-doorway.glb',
+    gate: 'assets/castle/gate.glb', metalGate: 'assets/castle/metal-gate.glb',
+    flag: g('assets/castle', ['flag', 'flag-banner-long', 'flag-wide']), bridge: 'assets/castle/bridge-straight.glb',
+    stairs: 'assets/castle/stairs-stone.glb', rocks: g('assets/castle', ['rocks-large', 'rocks-small']),
+  },
+
+  // --- Dungeon (mundo fantasy: mazmorra) ---
+  dungeon: {
+    floor: 'assets/dungeon/floor.glb', wall: 'assets/dungeon/wall.glb', wallOpening: 'assets/dungeon/wall-opening.glb',
+    gate: 'assets/dungeon/gate.glb', chest: 'assets/dungeon/chest.glb', barrel: 'assets/dungeon/barrel.glb',
+    banner: 'assets/dungeon/banner.glb', column: 'assets/dungeon/column.glb', stairs: 'assets/dungeon/stairs.glb',
+    orc: 'assets/dungeon/character-orc.glb', rocks: 'assets/dungeon/rocks.glb', coin: 'assets/dungeon/coin.glb',
+  },
 }
 
 export function allModelUrls() {

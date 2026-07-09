@@ -69,6 +69,13 @@ html, body {
   line-height: 1.3;
 }
 
+/* ---------- Fade de viaje entre mundos ---------- */
+#fade {
+  position: fixed; inset: 0; background: #0a0f16; opacity: 0;
+  pointer-events: none; z-index: 80; transition: opacity 0.25s ease;
+}
+#fade.on { opacity: 1; }
+
 /* ---------- HUD ---------- */
 #hud {
   position: fixed;
