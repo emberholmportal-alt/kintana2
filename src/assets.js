@@ -46,6 +46,12 @@ export const MODELS = {
     'sedan', 'taxi', 'police', 'suv', 'suv-luxury', 'van',
     'truck', 'delivery', 'hatchback-sports', 'sedan-sports', 'garbage-truck',
   ].map((n) => `${CITY}/cars/${n}.glb`),
+
+  // --- Personajes placeholder (ciudadanos) ---
+  character: [
+    'character-male-a', 'character-male-b', 'character-male-c',
+    'character-female-a', 'character-female-b', 'character-female-c',
+  ].map((n) => `assets/characters/${n}.glb`),
 }
 
 // Lista plana para precargar todo de una.
@@ -59,5 +65,6 @@ export function allModelUrls() {
   urls.add(MODELS.planter)
   urls.add(MODELS.fence)
   MODELS.car.forEach((u) => urls.add(u))
+  MODELS.character.forEach((u) => urls.add(u))
   return [...urls]
 }

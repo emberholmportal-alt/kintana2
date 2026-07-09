@@ -60,6 +60,14 @@ html, body {
   transition: width 0.2s ease;
 }
 .pct { margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.6; }
+.err {
+  margin-top: 0.8rem;
+  font-size: 0.75rem;
+  color: #ffb4b4;
+  max-width: min(420px, 80vw);
+  word-break: break-word;
+  line-height: 1.3;
+}
 
 /* ---------- HUD ---------- */
 #hud {
