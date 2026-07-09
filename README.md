@@ -29,20 +29,26 @@ Distritos (isla de 34×34 tiles):
 
 ## Qué hay hasta ahora
 
-- **Cámara ortográfica isométrica** que **sigue al jugador** (orbitar/zoom).
-- **Red vial jerárquica** con autotiling correcto (rectas, esquinas, T y
-  cruces según los vecinos) — calles planas y conectadas.
-- **Escala coherente** anclada al personaje (edificios/autos a proporción).
-- **Tráfico**: autos que recorren la grilla y **barcos en movimiento**.
-- **Personaje** con **click-to-move** (A* que esquiva edificios) y
-  **animaciones** (idle/walk) desde el rig de Kenney.
-- Menos verde: suelo urbano, pasto sólo en residencial/parques.
-- **Puerto**: muelles, carguero, transatlántico, contenedores, boyas.
-- **HUD** con assets UI de Kenney (Combat/Woodcutting/Mining/Fishing/Cooking).
+- **Movimiento**: **WASD/flechas** (relativo a cámara) **y click** para
+  caminar (A* que esquiva edificios). La cámara rota con **botón derecho**
+  (no interfiere con el click) y **sigue al jugador con zona muerta**.
+- **Edificios que tapan al jugador se transparentan** (occlusion fade), para
+  no perder de vista al personaje.
+- **Red vial** con autotiling correcto + **veredas** (calles más anchas).
+- **Zonas con diseño ordenado**: residencial en hileras, plaza simétrica
+  (fuente + estatuas + bancos + flores), skatepark con layout fijo,
+  cementerio en hileras, **minimarket al que se entra** (paredes, puerta,
+  ventanilla/caja, góndolas, heladeras, empleado).
+- **Nuevas zonas**: **bosque** con campamento (Nature + Survival),
+  **caleta pirata** y **playa** en la costa (Pirate Kit).
+- **Tráfico**: autos por la grilla y **todos los barcos/botes en movimiento**.
+- **Escala coherente**; suelo urbano (pasto sólo en verde real).
+- Personaje **animado** (idle/walk) desde el rig de Kenney.
+- **HUD** con assets UI de Kenney.
 
-Assets 3D en `public/assets/`: `city/` (City Kit + Car Kit + Industrial),
-`characters/` (Mini Characters, animados), `market/`, `skate/`,
-`graveyard/`, `port/` (Watercraft) y `ui/` (UI Pack). Todo CC0 de Kenney.
+Assets 3D en `public/assets/` (todo CC0 de Kenney): `city/`, `characters/`,
+`market/`, `skate/`, `graveyard/`, `port/`, `nature/`, `pirate/`,
+`survival/`, `ui/`.
 
 ## Correr en local
 
