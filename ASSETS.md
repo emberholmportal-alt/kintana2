@@ -204,9 +204,16 @@ parcial) + UI. Total en repo: ~18 MB.
 | `public/assets/city/modular-buildings/` | Modular Buildings   | 108 |
 | `public/assets/city/cars/`            | Car Kit               | 50  |
 | `public/assets/ui/blue/` `grey/` `spritesheet/` | UI Pack     | —   |
+| `public/assets/characters/`           | Mini Characters (animados) | 6 |
+| `public/assets/market/`               | Mini Market           | 20  |
+| `public/assets/skate/`                | Mini Skate            | 20  |
+| `public/assets/graveyard/`            | Graveyard Kit (subset)| 28  |
+| `public/assets/port/`                 | Watercraft Pack (subset) | 17 |
 
 Cada carpeta de kit incluye su `Textures/colormap.png` (los GLB la
-referencian de forma relativa).
+referencian de forma relativa). Los **Mini Characters** son *skinned meshes*
+con 32 animaciones (idle, walk, sprint, attack, pick-up, fish…): se clonan
+con `SkeletonUtils` y se animan con `AnimationMixer`.
 
 ## Próximos pasos (assets)
 

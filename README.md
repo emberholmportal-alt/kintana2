@@ -13,19 +13,24 @@ Vite**. Assets: pack CC0 de Kenney.
 ## Qué hay hasta ahora
 
 - Escena Three.js con **cámara ortográfica isométrica** (ángulo clásico
-  ~35°, azimut 45°) y controles de orbitar/zoom/desplazar.
-- **Ciudad generada proceduralmente** sobre una grilla de 29×29 tiles:
-  - Avenidas en cuadrícula con cruces y autos.
-  - **Downtown** de rascacielos, zona **comercial** de media altura,
-    barrio **suburbano** de casas y un **parque** con árboles.
-  - Plaza/hub central abierto rodeado de comercios.
-- **HUD** con los assets UI de Kenney (barra de skills placeholder:
-  Combat / Woodcutting / Mining / Fishing / Cooking).
-- Sombras, niebla de profundidad y suelo de pasto.
+  ~35°, azimut 45°) que **sigue al jugador**, con orbitar/zoom.
+- **Isla generada proceduralmente** (40×40 tiles) rodeada de **agua**:
+  - **Avenidas anchas** (2 tiles) en cuadrícula con cruces y autos.
+  - Distritos: **downtown** de rascacielos, **suburbios**, **plaza/hub**,
+    un **parque**, **skatepark**, **feria/mercado** y **cementerio**.
+  - **Puerto** en la costa sur: muelles de madera, barcos, transatlántico,
+    carguero, contenedores y boyas.
+- **Escala coherente** anclada al personaje (edificios/autos/objetos
+  proporcionados a la altura del jugador).
+- **Personaje** con **click-to-move** (pathfinding A* que esquiva
+  edificios) y **animaciones** (idle/walk) desde el rig de Kenney.
+- **HUD** con assets UI de Kenney (skills: Combat / Woodcutting / Mining /
+  Fishing / Cooking) e indicador de avatar.
+- Sombras, niebla de profundidad, agua y suelo de pasto.
 
-Los assets 3D usados están en `public/assets/city/` (City Kit: roads,
-commercial, suburban, industrial, modular buildings, cars) y la UI en
-`public/assets/ui/`.
+Assets 3D en `public/assets/`: `city/` (City Kit + Car Kit), `characters/`
+(Mini Characters, animados), `market/`, `skate/`, `graveyard/`, `port/`
+(Watercraft) y `ui/` (UI Pack). Todo CC0 de Kenney.
 
 ## Correr en local
 
@@ -80,12 +85,11 @@ config correcta automáticamente. Solo tenés que apuntarlo al repo.
 kintana2/
 ├─ index.html          # entry + overlay de carga + HUD
 ├─ src/
-│  ├─ main.js          # escena, cámara iso, layout procedural de la ciudad
-│  ├─ assets.js        # manifiesto de modelos GLB
+│  ├─ main.js          # escena, cámara iso, isla+puerto procedural, personaje
+│  ├─ assets.js        # manifiesto de modelos GLB por categoría
 │  └─ style.css        # estilos del HUD/loader
 ├─ public/assets/
-│  ├─ city/            # GLB del City Kit (roads, commercial, suburban, ...)
-│  └─ ui/              # PNG del UI Pack de Kenney
+│  ├─ city/ characters/ market/ skate/ graveyard/ port/ ui/
 ├─ render.yaml         # config de deploy en Render
 ├─ vite.config.js
 ├─ ASSETS.md           # inventario del pack Kenney + recomendación
@@ -95,6 +99,6 @@ kintana2/
 ## Próximos pasos (según CLAUDE.md)
 
 - Barrio **medieval** como distrito aparte (Fantasy Town Kit + Castle Kit).
-- **Naturaleza** dedicada (Nature Kit) para plaza/fuente y zonas de gathering.
-- **Personaje placeholder** con **click-to-move** (pathfinding por grilla).
-- Props de interiores (Furniture, Food, Mini Market).
+- **Naturaleza** dedicada (Nature Kit) para fuente/gathering.
+- Animaciones extra del rig (correr, pescar, minar, combate) por skill.
+- Recursos y herramientas (hacha, pico, caña) sobre el mundo.
