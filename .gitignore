@@ -1,0 +1,12 @@
+# Assets crudos de Kenney (nunca se commitean)
+_assets_raw/
+
+# Dependencias
+node_modules/
+
+# Build de Vite
+dist/
+
+# Logs y temporales
+*.log
+.DS_Store
