@@ -1,0 +1,12 @@
+# Blueprint de Render para KINTANA2 (sitio estatico Vite + Three.js).
+# New + -> Blueprint en el dashboard de Render y apuntar a este repo.
+services:
+  - type: web
+    name: kintana2
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

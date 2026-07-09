@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>KINTANA2 — prototipo de mundo</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <!-- Overlay de carga -->
+    <div id="loader">
+      <div class="loader-box">
+        <h1>KINTANA2</h1>
+        <p class="tag">construyendo la ciudad…</p>
+        <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+        <p class="pct" id="loaderPct">0%</p>
+      </div>
+    </div>
+
+    <!-- HUD del juego (usa assets UI de Kenney) -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-title">KINTANA2</div>
+        <div class="hud-sub">prototipo visual · ciudad moderna</div>
+      </div>
+
+      <div class="hud-skills" id="hudSkills"></div>
+
+      <div class="hud-help">
+        Arrastrá para orbitar · rueda/pellizco para zoom · botón derecho para desplazar
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

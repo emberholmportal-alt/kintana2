@@ -190,8 +190,28 @@ pesados y se pueden recortar a un subconjunto de modelos.
 
 ---
 
-## Próximo paso
+## Estado — assets ya copiados a `public/assets/`
 
-Esperando aprobación del inventario para ejecutar la **Tarea 3**: copiar
-solo los GLB seleccionados a `public/assets/<categoría>/`. Nada se copia
-hasta la aprobación.
+Aprobado el inventario, se copió la **base urbana completa** (Tarea 3
+parcial) + UI. Total en repo: ~18 MB.
+
+| Carpeta destino                       | Origen (kit)          | GLB |
+|---------------------------------------|-----------------------|-----|
+| `public/assets/city/roads/`           | City Kit - Roads      | 72  |
+| `public/assets/city/commercial/`      | City Kit - Commercial | 41  |
+| `public/assets/city/suburban/`        | City Kit - Suburban   | 40  |
+| `public/assets/city/industrial/`      | City Kit - Industrial | 25  |
+| `public/assets/city/modular-buildings/` | Modular Buildings   | 108 |
+| `public/assets/city/cars/`            | Car Kit               | 50  |
+| `public/assets/ui/blue/` `grey/` `spritesheet/` | UI Pack     | —   |
+
+Cada carpeta de kit incluye su `Textures/colormap.png` (los GLB la
+referencian de forma relativa).
+
+## Próximos pasos (assets)
+
+Pendiente de copiar cuando encaremos el **barrio medieval** y la naturaleza:
+- Medieval: `Fantasy Town Kit`, `Castle Kit` (+ `Graveyard Kit` para tumbas).
+- Verde: `Nature Kit` (fuente/plaza, zonas de gathering).
+- Props: `Furniture Kit`, `Food Kit`, `Mini Market`.
+- Personajes placeholder: `Mini Characters` / `Blocky Characters`.
