@@ -7,6 +7,9 @@ export const MODELS = {
   road: {
     straight: `${CITY}/roads/road-straight.glb`,
     crossroad: `${CITY}/roads/road-crossroad.glb`,
+    bend: `${CITY}/roads/road-bend.glb`,       // esquina
+    tee: `${CITY}/roads/road-intersection.glb`, // T
+    end: `${CITY}/roads/road-end.glb`,          // final
   },
 
   // --- Edificios ---
@@ -25,6 +28,12 @@ export const MODELS = {
     'building-type-i', 'building-type-j', 'building-type-k', 'building-type-l',
     'building-type-m', 'building-type-n', 'building-type-o', 'building-type-p',
   ]),
+  industrial: g(`${CITY}/industrial`, [
+    'building-a', 'building-b', 'building-c', 'building-d', 'building-e',
+    'building-f', 'building-g', 'building-h', 'building-i', 'building-j',
+    'building-k', 'building-l', 'building-m', 'building-n', 'building-o',
+  ]),
+  chimney: g(`${CITY}/industrial`, ['chimney-large', 'chimney-medium', 'chimney-small', 'detail-tank']),
 
   // --- Verde ---
   tree: g(`${CITY}/suburban`, ['tree-large', 'tree-small']),

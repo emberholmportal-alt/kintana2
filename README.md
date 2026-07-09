@@ -10,27 +10,39 @@ Vite**. Assets: pack CC0 de Kenney.
 
 ![prototipo](docs/preview.png)
 
+## Diseño urbano
+
+La ciudad **no se genera amontonando assets**: se construye en orden
+urbanístico (límites → red vial → distritos → manzanas → parques →
+comercio → residencial → industria → especiales → decoración → vegetación).
+El plano define distritos con función clara y transiciones lógicas.
+
+![plano](docs/plano.png)
+
+Distritos (isla de 34×34 tiles):
+- **Centro**: downtown de rascacielos + **plaza central con fuente**.
+- **Comercial**: sobre las avenidas, alrededor del centro.
+- **Residencial**: casas agrupadas en la periferia (N/E/O), con jardines.
+- **Parque** y **skatepark** al norte; **feria/mercado** al este.
+- **Industria** al sur, junto al **puerto** (lógica logística).
+- **Cementerio** en la periferia noreste.
+
 ## Qué hay hasta ahora
 
-- Escena Three.js con **cámara ortográfica isométrica** (ángulo clásico
-  ~35°, azimut 45°) que **sigue al jugador**, con orbitar/zoom.
-- **Isla generada proceduralmente** (40×40 tiles) rodeada de **agua**:
-  - **Avenidas anchas** (2 tiles) en cuadrícula con cruces y autos.
-  - Distritos: **downtown** de rascacielos, **suburbios**, **plaza/hub**,
-    un **parque**, **skatepark**, **feria/mercado** y **cementerio**.
-  - **Puerto** en la costa sur: muelles de madera, barcos, transatlántico,
-    carguero, contenedores y boyas.
-- **Escala coherente** anclada al personaje (edificios/autos/objetos
-  proporcionados a la altura del jugador).
-- **Personaje** con **click-to-move** (pathfinding A* que esquiva
-  edificios) y **animaciones** (idle/walk) desde el rig de Kenney.
-- **HUD** con assets UI de Kenney (skills: Combat / Woodcutting / Mining /
-  Fishing / Cooking) e indicador de avatar.
-- Sombras, niebla de profundidad, agua y suelo de pasto.
+- **Cámara ortográfica isométrica** que **sigue al jugador** (orbitar/zoom).
+- **Red vial jerárquica** con autotiling correcto (rectas, esquinas, T y
+  cruces según los vecinos) — calles planas y conectadas.
+- **Escala coherente** anclada al personaje (edificios/autos a proporción).
+- **Tráfico**: autos que recorren la grilla y **barcos en movimiento**.
+- **Personaje** con **click-to-move** (A* que esquiva edificios) y
+  **animaciones** (idle/walk) desde el rig de Kenney.
+- Menos verde: suelo urbano, pasto sólo en residencial/parques.
+- **Puerto**: muelles, carguero, transatlántico, contenedores, boyas.
+- **HUD** con assets UI de Kenney (Combat/Woodcutting/Mining/Fishing/Cooking).
 
-Assets 3D en `public/assets/`: `city/` (City Kit + Car Kit), `characters/`
-(Mini Characters, animados), `market/`, `skate/`, `graveyard/`, `port/`
-(Watercraft) y `ui/` (UI Pack). Todo CC0 de Kenney.
+Assets 3D en `public/assets/`: `city/` (City Kit + Car Kit + Industrial),
+`characters/` (Mini Characters, animados), `market/`, `skate/`,
+`graveyard/`, `port/` (Watercraft) y `ui/` (UI Pack). Todo CC0 de Kenney.
 
 ## Correr en local
 
