@@ -62,14 +62,36 @@ export const MODELS = {
 
   // --- Cementerio ---
   graveyard: {
-    props: g('assets/graveyard', ['gravestone-round', 'gravestone-cross', 'gravestone-bevel', 'gravestone-wide', 'gravestone-broken', 'cross', 'cross-wood']),
+    props: g('assets/graveyard', ['gravestone-round', 'gravestone-cross', 'gravestone-bevel', 'gravestone-wide', 'gravestone-broken', 'gravestone-cross-large', 'gravestone-decorative', 'gravestone-roof', 'cross', 'cross-wood', 'cross-column']),
     crypt: g('assets/graveyard', ['crypt', 'crypt-small', 'crypt-large']),
+    coffin: g('assets/graveyard', ['coffin', 'coffin-old']),
+    grave: g('assets/graveyard', ['grave', 'grave-border']),
+    wall: g('assets/graveyard', ['stone-wall', 'stone-wall-damaged']),
+    wallCorner: 'assets/graveyard/stone-wall-column.glb',
+    pillar: g('assets/graveyard', ['pillar-obelisk', 'pillar-square', 'pillar-large', 'pillar-small', 'column-large']),
+    urn: g('assets/graveyard', ['urn-round', 'urn-square']),
     fence: 'assets/graveyard/iron-fence.glb',
     gate: 'assets/graveyard/fence-gate.glb',
-    tree: 'assets/graveyard/pine.glb',
-    lantern: 'assets/graveyard/lantern-glass.glb',
+    tree: g('assets/graveyard', ['pine', 'pine-fall', 'pine-crooked']),
+    rock: g('assets/graveyard', ['rocks', 'rocks-tall']),
+    lamp: g('assets/graveyard', ['lightpost-single', 'lightpost-double']),
+    lantern: g('assets/graveyard', ['lantern-glass', 'lantern-candle']),
+    fire: 'assets/graveyard/fire-basket.glb',
+    pumpkin: g('assets/graveyard', ['pumpkin', 'pumpkin-tall']),
+    altar: g('assets/graveyard', ['altar-stone']),
     bench: 'assets/graveyard/bench.glb',
   },
+
+  // --- Building Kit (depositos del puerto) ---
+  building: {
+    wall: 'assets/building/wall.glb', wallCorner: 'assets/building/wall-corner.glb', floor: 'assets/building/floor.glb',
+    door: 'assets/building/door-rotate-square-a.glb', window: g('assets/building', ['barricade-window-a']),
+    column: g('assets/building', ['column', 'column-wide']), pipe: 'assets/building/detail-pipe.glb', gutter: 'assets/building/gutter-vertical.glb',
+    barricade: g('assets/building', ['barricade-doorway-a', 'barricade-window-a']),
+  },
+
+  // --- Conos / props de calle (Car Kit) ---
+  cone: g(`${CITY}/cars`, ['cone', 'cone-flat', 'box']),
 
   // --- Puerto ---
   port: {
