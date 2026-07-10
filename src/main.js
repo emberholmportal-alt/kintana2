@@ -56,6 +56,8 @@ function optsFor(u) {
   if (u.includes('skyscraper')) return { height: 3.2, maxFootprint: 1.35 }
   if (u.includes('/commercial/')) return { height: 1.7, maxFootprint: 1.2 }
   if (u.includes('/industrial/chimney') || u.includes('detail-tank')) return { height: 2.0, maxFootprint: 1.0 }
+  if (u.includes('sample-house')) return { height: 1.2, maxFootprint: 1.5 }
+  if (u.includes('sample-tower')) return { height: 2.3, maxFootprint: 1.3 }
   if (u.includes('/industrial/')) return { height: 1.5, maxFootprint: 1.35 }
   if (u.includes('/suburban/tree')) return { height: u.includes('large') ? 1.25 : 0.8 }
   if (u.includes('/suburban/')) return { height: 1.15, maxFootprint: 1.4 }
@@ -204,12 +206,10 @@ function decorate(lo, hi, lz, hz, opts = {}) {
     else if (s % 7 === 1) addObj(mkHydrant(), x, z, { block: true })
     else if (s % 9 === 4) place(MODELS.graveyard.bench, x, z, { rotY: along ? 0 : Math.PI / 2, block: true })
     else if (s % 11 === 3) addObj(mkTrash(), x, z, { block: true })
-    // autos estacionados en el cordon (tiles pegados a la avenida)
-    else if (opts.parked && rng() < 0.28) { const nearRoad = isRoadC(x + (x === lo ? -1 : 1), z) || isRoadC(x, z + (z === lz ? -1 : 1)); if (nearRoad) { const c = inst(pick(MODELS.car, 'pk')); if (c) addObj(c, x, z, { block: true, rotY: along ? 0 : Math.PI / 2 }) } }
   }
 }
 function buildCity() {
-  resetWorld(52, 7); COAST_Z = 38; currentWorld = 'city'
+  resetWorld(54, 7); COAST_Z = 46; currentWorld = 'city'
   scene.background.set(0x9fd3ef)
   bigPlane(420, 0x3a9ad0, -0.22, true)
   const landS = worldZ(COAST_Z) - 0.5
@@ -226,16 +226,17 @@ function buildCity() {
   // baranda de promenade en los bordes N/E/O del mapa
   for (let x = 1; x < GRID - 1; x++) { addObj(mkRail(0), x, 0, {}); if (x % 5 === 0) addObj(mkLamp(), x, 0, { block: true }) }
   for (let z = 1; z < COAST_Z; z++) { addObj(mkRail(Math.PI / 2), 0, z, {}); addObj(mkRail(Math.PI / 2), GRID - 1, z, {}) }
-  const BX = [[0, 6], [9, 18], [21, 30], [33, 42], [45, 51]], BZ = [[0, 6], [9, 18], [21, 30]]
+  const BX = [[0, 6], [9, 18], [21, 30], [33, 42], [45, 53]], BZ = [[0, 6], [9, 18], [21, 30], [33, 44]]
   const PLAN = [
-    ['resid', 'park', 'downtown', 'arcade', 'cemetery'],
-    ['forest', 'commercial', 'plaza', 'market', 'resid'],
-    ['resid', 'industrial', 'downtown', 'resid', 'skate'],
+    ['resid', 'park', 'commercial', 'arcade', 'cemetery'],
+    ['forest', 'resid', 'downtown', 'market', 'resid'],
+    ['resid', 'commercial', 'plaza', 'resid', 'skate'],
+    ['resid', 'industrial', 'commercial', 'resid', 'park'],
   ]
   for (let bz = 0; bz < BZ.length; bz++) for (let bx = 0; bx < BX.length; bx++) cityBlock(BX[bx], BZ[bz], PLAN[bz][bx])
   cityCoast()
-  spawnCars(40)
-  return { x: 25, z: 25 } // spawn en la plaza (abierta)
+  spawnCars(14)
+  return { x: 25, z: 26 } // spawn en la plaza central
 }
 const ringOf = (x, z, lo, hi, lz, hz) => Math.min(x - lo, hi - x, z - lz, hz - z)
 function faceOut(x, z, lo, hi, lz, hz) { const dl = x - lo, dr = hi - x, dt = z - lz, db = hz - z, m = Math.min(dl, dr, dt, db); if (m === dl) return Math.PI / 2; if (m === dr) return -Math.PI / 2; if (m === dt) return Math.PI; return 0 }
@@ -251,21 +252,42 @@ function cityBlock(bx, bz, dist) {
   if (dist === 'market') return buildShop(lo, hi, lz, hz, MODELS.market, false)
   if (dist === 'arcade') return buildShop(lo, hi, lz, hz, MODELS.arcade, true)
   if (dist === 'skate') return citySkate(lo, hi, lz, hz)
-  // downtown / commercial / industrial / resid
-  const pool = { downtown: MODELS.skyscraper, commercial: MODELS.commercial, industrial: MODELS.industrial, resid: MODELS.house }[dist]
-  const bRings = dist === 'downtown' ? 2 : 1
-  for (let x = lo; x <= hi; x++) for (let z = lz; z <= hz; z++) {
-    const r = ringOf(x, z, lo, hi, lz, hz)
-    if (r >= 1 && r <= bRings) { if (rng() < (dist === 'resid' ? 0.82 : 0.82)) place(pick(pool, dist), x, z, { rotY: faceOut(x, z, lo, hi, lz, hz), block: true, jitter: 0.03, occ: true }) }
-    else if (r > bRings) { // interior lleno segun zona
-      const rr = rng()
-      if (dist === 'downtown') { if (rr < 0.35) place(pick(MODELS.skyscraper, 'di'), x, z, { block: true, occ: true }); else if (rr < 0.5) place(pick(MODELS.commercial, 'dc'), x, z, { block: true, occ: true }); else if (rr < 0.6) addObj(mkLamp(), x, z, { block: true }); else if (rr < 0.68) place(pick(MODELS.nature.tree, 'dtt'), x, z, { rotY: rng() * 6.28, block: true }) }
-      else if (dist === 'commercial') { if (rr < 0.3) place(pick(MODELS.commercial, 'ci'), x, z, { block: true, occ: true }); else if (rr < 0.45) { const c = inst(pick(MODELS.car, 'cc')); if (c) addObj(c, x, z, { block: true, rotY: rng() < .5 ? 0 : Math.PI / 2 }) } else if (rr < 0.58) place(pick(MODELS.nature.tree, 'ctt'), x, z, { rotY: rng() * 6.28, block: true }); else if (rr < 0.66) place(MODELS.graveyard.bench, x, z, { block: true }) }
-      else if (dist === 'industrial') { if (rr < 0.3) place(pick(MODELS.chimney, 'ich'), x, z, { block: true, occ: true }); else if (rr < 0.5) place(pick(MODELS.port.container, 'icc'), x, z, { rotY: rng() < .5 ? 0 : Math.PI / 2, block: true }); else if (rr < 0.6) place(pick(MODELS.port.pile, 'ipl'), x, z, { block: true }); else if (rr < 0.7) place(pick(MODELS.survival.camp.slice(3, 6), 'ibar'), x, z, { block: true }) }
-      else { if (rr < 0.22) place(pick(MODELS.house, 'ri'), x, z, { rotY: rng() * 6.28, block: true, occ: true }); else if (rr < 0.45) place(pick(MODELS.suburbTree, 'rit'), x, z, { rotY: rng() * 6.28, block: true }); else if (rr < 0.6) place(pick([...MODELS.nature.plant, ...MODELS.nature.flower], 'rif'), x, z, {}); else if (rr < 0.68) place(MODELS.fence, x, z, { rotY: rng() < .5 ? 0 : Math.PI / 2, block: true }) }
-    }
+  if (dist === 'downtown') cityDowntown(lo, hi, lz, hz)
+  else if (dist === 'commercial') cityCommercial(lo, hi, lz, hz)
+  else if (dist === 'industrial') cityIndustrial(lo, hi, lz, hz)
+  else cityResidential(lo, hi, lz, hz)
+  decorate(lo, hi, lz, hz, { trees: dist === 'resid' ? MODELS.suburbTree : MODELS.nature.tree })
+}
+// coloca edificios en el anillo 1 (mirando a la calle)
+function bldRow(lo, hi, lz, hz, poolFn, dens) { for (let x = lo; x <= hi; x++) for (let z = lz; z <= hz; z++) { if (ringOf(x, z, lo, hi, lz, hz) !== 1) continue; if (rng() < dens) place(poolFn(), x, z, { rotY: faceOut(x, z, lo, hi, lz, hz), block: true, jitter: 0.02, occ: true }) } }
+const inInterior = (x, z, lo, hi, lz, hz) => ringOf(x, z, lo, hi, lz, hz) >= 2
+function cityDowntown(lo, hi, lz, hz) {
+  // menos rascacielos: mayoria torres modulares/comerciales
+  bldRow(lo, hi, lz, hz, () => { const r = rng(); return r < 0.28 ? pick(MODELS.skyscraper, 'sk') : r < 0.65 ? pick(MODELS.modularTower, 'mt') : pick(MODELS.commercial, 'cm') }, 0.85)
+  // interior: plaza limpia con arboles/bancos/faroles alineados
+  for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) { if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.nature.tree, 'dtt'), x, z, { block: true }); else if (x % 4 === 1 && z % 4 === 1) addObj(mkLamp(), x, z, { block: true }); else if (x % 3 === 0 && z % 4 === 3) place(MODELS.graveyard.bench, x, z, { rotY: Math.PI / 2, block: true }) }
+}
+function cityCommercial(lo, hi, lz, hz) {
+  bldRow(lo, hi, lz, hz, () => rng() < 0.6 ? pick(MODELS.commercial, 'cm') : pick(MODELS.modularTower, 'mt'), 0.82)
+  for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) { if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.nature.tree, 'ctt'), x, z, { block: true }); else if (x % 3 === 1 && z % 3 === 1) addObj(mkLamp(), x, z, { block: true }); else if (x % 4 === 2 && z % 4 === 2) place(MODELS.graveyard.bench, x, z, { block: true }) }
+}
+function cityIndustrial(lo, hi, lz, hz) {
+  // ORDENADO: naves en el anillo, chimeneas/tanques en grilla regular, sin containers/pilas
+  bldRow(lo, hi, lz, hz, () => pick(MODELS.industrial, 'ind'), 0.8)
+  for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) {
+    if (x % 3 === 0 && z % 3 === 0) place(pick(MODELS.industrial, 'ini'), x, z, { block: true, occ: true })
+    else if (x % 3 === 1 && z % 3 === 1) place(pick(MODELS.chimney, 'ich'), x, z, { block: true, occ: true })
+    else if (x % 4 === 2 && z % 4 === 2) place(MODELS.tank, x, z, { block: true, occ: true })
   }
-  decorate(lo, hi, lz, hz, { parked: dist !== 'resid', trees: dist === 'resid' ? MODELS.suburbTree : MODELS.nature.tree })
+}
+function cityResidential(lo, hi, lz, hz) {
+  // hilera continua de casas (suburbanas + modulares) mirando a la calle
+  bldRow(lo, hi, lz, hz, () => rng() < 0.6 ? pick(MODELS.house, 'rh') : pick(MODELS.modularHouse, 'mh'), 0.85)
+  // interior LIMPIO: jardin con arboles alineados (grilla), sin cercas ni junk
+  for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) {
+    if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.suburbTree, 'rit'), x, z, { rotY: rng() * 6.28, block: true })
+    else if (x % 4 === 1 && z % 4 === 1) place(pick(MODELS.nature.flower, 'rif'), x, z, {})
+  }
 }
 function cityPlaza(lo, hi, lz, hz) {
   const cx = (lo + hi) / 2 | 0, cz = (lz + hz) / 2 | 0
@@ -341,7 +363,15 @@ function buildShop(lo, hi, lz, hz, kit, isArcade) {
   }
   place(kit.cash, winX, z1 - 1, { rotY: Math.PI, block: true })
   place(kit.employee || MODELS.market.employee, winX, z1 - 2, {})
-  if (isArcade) { for (let z = z0 + 1; z <= z1 - 1; z++) for (let x = x0 + 1; x <= x1 - 1; x++) if ((z - z0) % 2 === 1 && x !== doorX) place(pick(kit.machine, 'am'), x, z, { rotY: (z - z0) < (z1 - z0) / 2 ? Math.PI : 0, block: true }) }
+  if (isArcade) {
+    // pasillos ordenados de maquinas variadas (fila mira al pasillo), cada 3ra fila caminable
+    for (let z = z0 + 1; z <= z1 - 2; z++) { const l = z - z0; if (l % 3 === 0) continue; for (let x = x0 + 1; x <= x1 - 1; x++) { if (x === doorX && z >= z1 - 3) continue; place(pick(kit.machine, 'am' + (l % 3)), x, z, { rotY: l % 3 === 1 ? 0 : Math.PI, block: true }) } }
+    // mostrador de premios: ruleta + premios + tickets + gamer
+    place(MODELS.arcade.wheel, x0 + 1, z1 - 1, { block: true })
+    place('assets/arcade/prizes.glb', x0 + 2, z1 - 1, { block: true })
+    place('assets/arcade/ticket-machine.glb', x1 - 1, z1 - 1, { block: true })
+    place('assets/arcade/character-gamer.glb', doorX, z1 - 2, {})
+  }
   else { for (let z = z0 + 1; z <= z1 - 2; z++) for (let x = x0 + 1; x <= x1 - 1; x++) { if ((z - z0) % 2 === 1) place(pick(kit.shelf, 'sh'), x, z, { rotY: Math.PI / 2, block: true }); else if (rng() < 0.5) place(pick(kit.display || kit.shelf, 'ds'), x, z, {}) } for (let x = x0 + 1; x <= x1 - 1; x++) place(kit.freezer, x, z0 + 1, { rotY: Math.PI, block: true }); place(MODELS.market.cart, doorX + 1, z1 + 1, {}); place(MODELS.market.cart, doorX - 1, z1 + 1, {}) }
   decorate(lo, hi, lz, hz, {})
 }

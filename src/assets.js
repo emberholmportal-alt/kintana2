@@ -17,7 +17,11 @@ export const MODELS = {
   skyscraper: g(`${CITY}/commercial`, ['building-skyscraper-a', 'building-skyscraper-b', 'building-skyscraper-c', 'building-skyscraper-d', 'building-skyscraper-e']),
   house: g(`${CITY}/suburban`, ['building-type-a', 'building-type-b', 'building-type-c', 'building-type-d', 'building-type-e', 'building-type-f', 'building-type-g', 'building-type-h', 'building-type-i', 'building-type-j', 'building-type-k', 'building-type-l', 'building-type-m', 'building-type-n', 'building-type-o', 'building-type-p', 'building-type-q', 'building-type-r']),
   industrial: g(`${CITY}/industrial`, ['building-a', 'building-b', 'building-c', 'building-d', 'building-e', 'building-f', 'building-g', 'building-h', 'building-i', 'building-j', 'building-k', 'building-l', 'building-m', 'building-n', 'building-o']),
-  chimney: g(`${CITY}/industrial`, ['chimney-large', 'chimney-medium', 'chimney-small', 'detail-tank']),
+  chimney: g(`${CITY}/industrial`, ['chimney-large', 'chimney-medium', 'chimney-small']),
+  tank: `${CITY}/industrial/detail-tank.glb`,
+  // casas/torres pre-armadas del kit Modular Buildings
+  modularHouse: g(`${CITY}/modular-buildings`, ['building-sample-house-a', 'building-sample-house-b', 'building-sample-house-c']),
+  modularTower: g(`${CITY}/modular-buildings`, ['building-sample-tower-a', 'building-sample-tower-b', 'building-sample-tower-c', 'building-sample-tower-d']),
 
   // props suburbanos
   suburbTree: g(`${CITY}/suburban`, ['tree-large', 'tree-small']),
