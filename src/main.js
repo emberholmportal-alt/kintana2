@@ -141,6 +141,9 @@ async function preloadAll() {
   await Promise.all(Array.from({ length: 14 }, worker))
 }
 const inst = (url) => { const t = cache.get(url); if (!t) return null; const o = isChar(url) ? skeletonClone(t) : t.clone(true); o.userData.url = url; return o }
+// carga lazy: para assets del pack completo que no se precargan (editor)
+async function loadOne(url) { if (cache.has(url)) return cache.get(url); const g = await loadGLB(url); if (!g) return null; const n = normalize(g.scene, optsFor(url)); cache.set(url, n); if (isChar(url) && g.animations?.length) charAnims.set(url, g.animations); return n }
+async function ensureLoaded(urls) { const need = [...new Set(urls)].filter((u) => !cache.has(u)); for (let i = 0; i < need.length; i += 12) await Promise.all(need.slice(i, i + 12).map(loadOne)) }
 const lastPick = new Map()
 function pick(list, key = 'g') { const ok = (list || []).filter((u) => cache.has(u)); if (!ok.length) return null; if (ok.length === 1) return ok[0]; let u, t = 0; do { u = ok[Math.floor(rng() * ok.length)] } while (u === lastPick.get(key) && ++t < 5); lastPick.set(key, u); return u }
 
@@ -252,7 +255,7 @@ function spawnSpec(e) {
   o.position.set(e.x, e.y, e.z); if (!flat) o.rotation.y = e.r; if (e.s) o.scale.setScalar(e.s)
   o.userData.ed = { ...e }; EDITABLE.push(o); return o
 }
-function loadWorldSpecs(specs) { for (const e of specs) spawnSpec(e) }
+async function loadWorldSpecs(specs) { await ensureLoaded(specs.filter((e) => e.t === 'glb').map((e) => e.u)); for (const e of specs) spawnSpec(e) }
 // decora la vereda (anillo exterior de la manzana) con farol/arbol/banco/hidrante y autos estacionados
 function decorate(lo, hi, lz, hz, opts = {}) {
   const treePool = opts.trees || MODELS.suburbTree
@@ -670,11 +673,11 @@ function checkPortals() { if (switching) return; for (const pt of portals) { if 
 const fade = document.getElementById('fade')
 function removeObj(o) { if (o.parent) o.parent.remove(o); let i = EDITABLE.indexOf(o); if (i >= 0) EDITABLE.splice(i, 1); i = occluders.indexOf(o); if (i >= 0) occluders.splice(i, 1); if (o.userData.proto === 'portal') { const j = portals.findIndex(p => p.ring === o.children[1]); if (j >= 0) portals.splice(j, 1) } }
 function saveMap() { return { world: currentWorld, grid: GRID, coast: COAST_Z, bg: scene.background.getHex(), spawn: { ...charTile }, specs: serializeWorld() } }
-function loadMap(s) { resetWorld(s.grid, 1); COAST_Z = s.coast; currentWorld = s.world; scene.background.set(s.bg); loadWorldSpecs(s.specs); return s.spawn || { x: (s.grid / 2) | 0, z: (s.grid / 2) | 0 } }
+async function loadMap(s) { resetWorld(s.grid, 1); COAST_Z = s.coast; currentWorld = s.world; scene.background.set(s.bg); await loadWorldSpecs(s.specs); return s.spawn || { x: (s.grid / 2) | 0, z: (s.grid / 2) | 0 } }
 function loadSaved(name) { try { const s = localStorage.getItem('kintana_map_' + name); return s ? JSON.parse(s) : null } catch { return null } }
-function build(name) {
+async function build(name) {
   const saved = loadSaved(name)
-  const sp = saved ? loadMap(saved) : (name === 'pirate' ? buildPirate() : name === 'fantasy' ? buildFantasy() : buildCity())
+  const sp = saved ? await loadMap(saved) : (name === 'pirate' ? buildPirate() : name === 'fantasy' ? buildFantasy() : buildCity())
   ensureCharacter(); placeCharacter(sp); updateWorldLabel(); if (editor) editor.refresh()
 }
 function travel(name) {
@@ -704,7 +707,7 @@ async function start() {
 let done = false
 function go() {
   if (done) return; done = true
-  try { build('city') } catch (e) { console.error(e); loaderErr.textContent = 'Error armando: ' + (e?.message || e) }
+  build('city').catch((e) => { console.error(e); loaderErr.textContent = 'Error armando: ' + (e?.message || e) })
   if (failed.length) console.warn('No cargaron:', failed.slice(0, 20))
   window.__kintana = {
     charPos: () => (character ? character.position.toArray().map((n) => +n.toFixed(2)) : null), world: () => currentWorld,
@@ -712,6 +715,7 @@ function go() {
     key: (k, v) => { keys[k] = v }, tick: (dt) => { if (mixer) mixer.update(dt); updateCharacter(dt); updateCars(dt); updateWatercraft(dt); updateOcclusion() },
     failed, zoom: (z) => { camera.zoom = z; camera.updateProjectionMatrix() }, fadedCount: () => faded.size, portals: () => portals.map(p => ({ x: p.x, z: p.z, to: p.to })),
     topdown: () => { controls.maxPolarAngle = Math.PI; camera.position.set(0, 95, 0.01); controls.target.set(0, 0, -2); camera.zoom = 0.62; camera.updateProjectionMatrix(); controls.update() },
+    edCount: () => EDITABLE.length, camPos: () => camera.position.toArray().map((n) => +n.toFixed(2)),
   }
   // Editor sandbox (dev): activar con ?edit en la URL. No aparece al publicar.
   if (new URLSearchParams(location.search).has('edit')) {
@@ -721,8 +725,9 @@ function go() {
     editor = initEditor({
       THREE, scene, camera, controls, canvas, renderer,
       groundMeshes: () => groundMeshes, editable: () => EDITABLE,
-      spawnGlb: (url, x, z, ry) => spawnSpec({ t: 'glb', u: url, x, y: 0, z, r: ry || 0, s: 1 }),
+      spawnGlb: async (url, x, z, ry) => { await loadOne(url); return spawnSpec({ t: 'glb', u: url, x, y: 0, z, r: ry || 0, s: 1 }) },
       spawnProto: (p, x, z, ry) => spawnSpec({ t: 'proto', p, x, y: 0, z, r: ry || 0, s: 1 }),
+      ensure: (url) => loadOne(url), cached: (url) => cache.get(url),
       removeObj, worldToTile,
       world: () => currentWorld, worlds: ['city', 'pirate', 'fantasy'], goWorld: (n) => build(n),
       saveLocal: () => { localStorage.setItem('kintana_map_' + currentWorld, JSON.stringify(saveMap())) },

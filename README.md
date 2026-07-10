@@ -32,14 +32,25 @@ Distritos (isla de 34×34 tiles):
 Herramienta para editar el mapa a mano. Se activa agregando **`?edit`** a la
 URL (ej: `localhost:5173/?edit`). **No aparece al publicar** (sin `?edit`).
 
-- **Paleta por categorías** (750 assets de Kenney) + props/terreno.
+- **Paleta dividida por kit** (los 47 kits 3D de Kenney, ~4.900 GLB), igual
+  que en <https://kenney.nl> + una sección de **Props / Terreno**.
+- **Preview de cada asset**: cada celda renderiza una miniatura 3D del modelo
+  (se generan on-demand al hacer scroll). Buscador por nombre.
 - **Colocar** (click en el suelo), **Seleccionar** (click en un objeto),
   **mover** (arrastrar), **rotar** (Q/E), **altura** (`[` `]`), **escala**
   (`,` `.`), **borrar** (Del), **duplicar**, **grilla** on/off.
-- Cámara libre: **botón derecho** rota, **rueda del medio** desplaza, scroll zoom.
+- **Cámara fácil**: **WASD** / **flechas** para desplazarte, **botón derecho**
+  rota, **rueda** hace zoom.
+- **Carga lazy**: los GLB del pack completo se cargan sólo cuando los usás
+  (colocar o previsualizar); no pesan en el arranque del juego.
 - **Guardar** (localStorage) · **Export/Import JSON** · **Procedural** (reset).
 - El mapa guardado se **carga solo** al abrir sin `?edit`. Para dejarlo como
   default publicado, exportá el JSON y se commitea en `public/maps/`.
+
+> Los GLB completos viven en `public/assets/kits/<kit>/` y se generan con
+> `node scripts/build-catalog.mjs` (copia desde `_assets_raw/` y regenera
+> `src/catalog.js`). El juego publicado sigue usando el set curado de
+> `public/assets/`; sólo el editor `?edit` toca la carpeta `kits/`.
 
 ## Multi-mundo con portales
 
