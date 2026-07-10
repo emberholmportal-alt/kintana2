@@ -35,6 +35,7 @@ for (const kit of kits) {
   fs.mkdirSync(destDir, { recursive: true })
   const seen = new Set()
   const urls = []
+  const srcDirs = new Set()
   for (const src of glbs) {
     let base = path.basename(src)
     // colisiones de basename dentro del kit: prefijar con subcarpeta
@@ -45,7 +46,18 @@ for (const kit of kits) {
     seen.add(base.toLowerCase())
     fs.copyFileSync(src, path.join(destDir, base))
     urls.push(`assets/kits/${kslug}/${base}`)
+    srcDirs.add(path.dirname(src))
     totalFiles++
+  }
+  // Muchos GLB de Kenney referencian una textura externa (Textures/colormap.png,
+  // relativa al glb). Como aplanamos, copiamos ese Textures/ a la raíz del kit.
+  const texDest = path.join(destDir, 'Textures')
+  for (const d of srcDirs) {
+    const tx = path.join(d, 'Textures')
+    if (fs.existsSync(tx) && fs.statSync(tx).isDirectory()) {
+      fs.mkdirSync(texDest, { recursive: true })
+      for (const f of fs.readdirSync(tx)) { const s = path.join(tx, f); if (fs.statSync(s).isFile()) fs.copyFileSync(s, path.join(texDest, f)) }
+    }
   }
   urls.sort()
   catalog[kit] = urls

@@ -32,15 +32,26 @@ Distritos (isla de 34×34 tiles):
 Herramienta para editar el mapa a mano. Se activa agregando **`?edit`** a la
 URL (ej: `localhost:5173/?edit`). **No aparece al publicar** (sin `?edit`).
 
-- **Paleta dividida por kit** (los 47 kits 3D de Kenney, ~4.900 GLB), igual
-  que en <https://kenney.nl> + una sección de **Props / Terreno**.
-- **Preview de cada asset**: cada celda renderiza una miniatura 3D del modelo
-  (se generan on-demand al hacer scroll). Buscador por nombre.
-- **Colocar** (click en el suelo), **Seleccionar** (click en un objeto),
-  **mover** (arrastrar), **rotar** (Q/E), **altura** (`[` `]`), **escala**
-  (`,` `.`), **borrar** (Del), **duplicar**, **grilla** on/off.
-- **Cámara fácil**: **WASD** / **flechas** para desplazarte, **botón derecho**
-  rota, **rueda** hace zoom.
+- **Paleta dividida por kit** (los 47 kits 3D de Kenney, ~4.900 GLB), con el
+  **nombre de cada kit en español** + **colecciones temáticas** (🌳 árboles,
+  ⛰️ terreno, 🪑 props, 🚗 vehículos, 🧍 personajes, 🏠 edificios) que buscan
+  en todos los kits + sección **⚙ Portales / Props del motor**.
+- **Preview 3D de cada asset**: cada celda renderiza una miniatura del modelo
+  (on-demand al hacer scroll, con altura fija para verlos bien).
+- **Buscador ES/EN**: buscás en español o inglés (ej. "arbol", "pared",
+  "auto") y encuentra el asset aunque el archivo esté en inglés.
+- **Colocar** (click en el suelo), **Seleccionar** (click), **mover**
+  (arrastrar **o flechas** con un objeto seleccionado), **rotar** (Q/E),
+  **altura** (`[` `]`), **escala** (`,` `.`), **borrar** (Del), **duplicar**.
+- **Undo / Redo** (`Ctrl+Z` / `Ctrl+Y`), **Copiar / Cortar / Pegar**
+  (`Ctrl+C` / `Ctrl+X` / `Ctrl+V`, pega donde está el mouse).
+- **Portales**: los colocás vos donde quieras (categoría Portales, elegís el
+  mundo destino).
+- **Cuadrícula** visual on/off para alinear + snap a grilla on/off.
+- **Al seleccionar un objeto** aparece resaltado en la paleta (para
+  identificarlo) y muestra su tipo/kit/posición arriba de la grilla.
+- **Cámara fácil**: **WASD** para desplazarte, **botón derecho** rota,
+  **rueda** hace zoom.
 - **Carga lazy**: los GLB del pack completo se cargan sólo cuando los usás
   (colocar o previsualizar); no pesan en el arranque del juego.
 - **Guardar** (localStorage) · **Export/Import JSON** · **Procedural** (reset).

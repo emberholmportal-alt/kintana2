@@ -727,7 +727,7 @@ function go() {
       groundMeshes: () => groundMeshes, editable: () => EDITABLE,
       spawnGlb: async (url, x, z, ry) => { await loadOne(url); return spawnSpec({ t: 'glb', u: url, x, y: 0, z, r: ry || 0, s: 1 }) },
       spawnProto: (p, x, z, ry) => spawnSpec({ t: 'proto', p, x, y: 0, z, r: ry || 0, s: 1 }),
-      ensure: (url) => loadOne(url), cached: (url) => cache.get(url),
+      spawnSpec: (e) => spawnSpec(e), ensure: (url) => loadOne(url), cached: (url) => cache.get(url),
       removeObj, worldToTile,
       world: () => currentWorld, worlds: ['city', 'pirate', 'fantasy'], goWorld: (n) => build(n),
       saveLocal: () => { localStorage.setItem('kintana_map_' + currentWorld, JSON.stringify(saveMap())) },
