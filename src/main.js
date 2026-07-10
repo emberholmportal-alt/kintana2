@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { MODELS, allModelUrls } from './assets.js'
+import { initEditor } from './editor.js'
+let editor = null
 
 // ============================================================
 //  KINTANA2 — mundo prototipo con multi-mundo + portales
@@ -138,7 +140,7 @@ async function preloadAll() {
   async function worker() { while (q.length) { const u = q.shift(); const g = await loadGLB(u); if (g) { cache.set(u, normalize(g.scene, optsFor(u))); if (isChar(u) && g.animations?.length) charAnims.set(u, g.animations) } done++; setBar() } }
   await Promise.all(Array.from({ length: 14 }, worker))
 }
-const inst = (url) => { const t = cache.get(url); if (!t) return null; return isChar(url) ? skeletonClone(t) : t.clone(true) }
+const inst = (url) => { const t = cache.get(url); if (!t) return null; const o = isChar(url) ? skeletonClone(t) : t.clone(true); o.userData.url = url; return o }
 const lastPick = new Map()
 function pick(list, key = 'g') { const ok = (list || []).filter((u) => cache.has(u)); if (!ok.length) return null; if (ok.length === 1) return ok[0]; let u, t = 0; do { u = ok[Math.floor(rng() * ok.length)] } while (u === lastPick.get(key) && ++t < 5); lastPick.set(key, u); return u }
 
@@ -155,10 +157,13 @@ const idx = (x, z) => z * GRID + x
 const inGrid = (x, z) => x >= 0 && z >= 0 && x < GRID && z < GRID
 const worldToTile = (p) => ({ x: Math.round((p.x + HALF - TILE / 2) / TILE), z: Math.round((p.z + HALF - TILE / 2) / TILE) })
 
+// registro de objetos editables (para el editor sandbox / guardado)
+const EDITABLE = []
+function track(o, spec) { if (o) { o.userData.ed = spec; EDITABLE.push(o) } return o }
 function resetWorld(size, seed) {
   GRID = size; HALF = GRID / 2; rng = makeRng(seed)
   blocked = new Uint8Array(GRID * GRID); roadTile = new Uint8Array(GRID * GRID)
-  occluders.length = 0; cars.length = 0; watercraft.length = 0; portals.length = 0; groundMeshes.length = 0; lastPick.clear(); waterMesh = null
+  occluders.length = 0; cars.length = 0; watercraft.length = 0; portals.length = 0; groundMeshes.length = 0; lastPick.clear(); waterMesh = null; EDITABLE.length = 0
   for (const m of faded) if (m.userData.origMat) m.material = m.userData.origMat; faded.clear()
   if (worldGroup) scene.remove(worldGroup)
   worldGroup = new THREE.Group(); scene.add(worldGroup)
@@ -167,14 +172,16 @@ function resetWorld(size, seed) {
 function place(url, gx, gz, { rotY = 0, y = 0, block = false, jitter = 0, occ = false } = {}) {
   if (!url) return null; const o = inst(url); if (!o) return null
   o.position.set(worldX(gx), y, worldZ(gz)); o.rotation.y = rotY + (jitter ? (rng() - 0.5) * jitter : 0)
-  worldGroup.add(o); if (occ) occluders.push(o); if (block && inGrid(gx, gz)) blocked[idx(gx, gz)] = 1; return o
+  worldGroup.add(o); if (occ) occluders.push(o); if (block && inGrid(gx, gz)) blocked[idx(gx, gz)] = 1
+  return track(o, { t: 'glb', u: url, x: o.position.x, y: o.position.y, z: o.position.z, r: o.rotation.y, occ, blk: block })
 }
-function placeW(url, wx, wz, { rotY = 0, y = 0, occ = false } = {}) { if (!url) return null; const o = inst(url); if (!o) return null; o.position.set(wx, y, wz); o.rotation.y = rotY; worldGroup.add(o); if (occ) occluders.push(o); return o }
+function placeW(url, wx, wz, { rotY = 0, y = 0, occ = false } = {}) { if (!url) return null; const o = inst(url); if (!o) return null; o.position.set(wx, y, wz); o.rotation.y = rotY; worldGroup.add(o); if (occ) occluders.push(o); return track(o, { t: 'glb', u: url, x: wx, y, z: wz, r: rotY, occ, blk: false }) }
 function groundPatch(x0, x1, z0, z1, color, y = 0, pickable = false) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry((x1 - x0 + 1) * TILE, (z1 - z0 + 1) * TILE), new THREE.MeshStandardMaterial({ color, roughness: 1 }))
-  m.rotation.x = -Math.PI / 2; m.position.set((worldX(x0) + worldX(x1)) / 2, y, (worldZ(z0) + worldZ(z1)) / 2); m.receiveShadow = true; worldGroup.add(m); if (pickable) groundMeshes.push(m); return m
+  m.rotation.x = -Math.PI / 2; m.position.set((worldX(x0) + worldX(x1)) / 2, y, (worldZ(z0) + worldZ(z1)) / 2); m.receiveShadow = true; worldGroup.add(m); if (pickable) groundMeshes.push(m)
+  return track(m, { t: 'patch', c: color, w: (x1 - x0 + 1) * TILE, d: (z1 - z0 + 1) * TILE, x: m.position.x, y, z: m.position.z, pk: pickable })
 }
-function bigPlane(size, color, y, pickable) { const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ color, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; worldGroup.add(m); if (pickable) groundMeshes.push(m); return m }
+function bigPlane(size, color, y, pickable) { const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ color, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; worldGroup.add(m); if (pickable) groundMeshes.push(m); return track(m, { t: 'grass', sz: size, c: color, x: 0, y, z: 0 }) }
 let waterMesh = null
 function addWater(size, color, y) {
   const geo = new THREE.PlaneGeometry(size, size, 44, 44)
@@ -182,8 +189,9 @@ function addWater(size, color, y) {
   m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true
   geo.userData.base = Float32Array.from(geo.attributes.position.array)
   worldGroup.add(m); groundMeshes.push(m); waterMesh = m
-  return m
+  return track(m, { t: 'water', sz: size, c: color, x: 0, y, z: 0 })
 }
+function mkPlank() { const m = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.12, 1.02), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 1 })); m.castShadow = m.receiveShadow = true; m.userData.proto = 'plank'; return m }
 function animateWater(t) {
   if (!waterMesh) return
   const pos = waterMesh.geometry.attributes.position, base = waterMesh.geometry.userData.base
@@ -192,13 +200,16 @@ function animateWater(t) {
 }
 
 // portal (pad brillante); al pisarlo se viaja
-function addPortal(gx, gz, to, color) {
+function mkPortal(to, color) {
   const g = new THREE.Group()
   const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.08, 24), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.6, roughness: 0.4 })); pad.position.y = 0.05
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.09, 12, 28), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 1.2 })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.5
-  g.add(pad, ring); g.position.set(worldX(gx), 0, worldZ(gz)); worldGroup.add(g)
-  portals.push({ x: gx, z: gz, to, ring })
-  if (inGrid(gx, gz)) blocked[idx(gx, gz)] = 0
+  g.add(pad, ring); g.userData.proto = 'portal'; g.userData.portal = { to, color }; return g
+}
+function registerPortal(g) { const t = worldToTile(g.position); portals.push({ x: t.x, z: t.z, to: g.userData.portal.to, ring: g.children[1] }); if (inGrid(t.x, t.z)) blocked[idx(t.x, t.z)] = 0 }
+function addPortal(gx, gz, to, color) {
+  const g = mkPortal(to, color); g.position.set(worldX(gx), 0, worldZ(gz)); worldGroup.add(g); registerPortal(g)
+  track(g, { t: 'portal', to, c: color, x: g.position.x, y: 0, z: g.position.z, r: 0 })
 }
 
 // ============================================================
@@ -217,11 +228,31 @@ const AVZ = new Set([7, 8, 19, 20, 31, 32])
 // mobiliario urbano procedural
 const lampMat = new THREE.MeshStandardMaterial({ color: 0x333941, roughness: 0.8 })
 const glowMat = new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xffd27a, emissiveIntensity: 0.9 })
-function addObj(o, gx, gz, { block = false, occ = false, y = 0, rotY = 0 } = {}) { o.position.set(worldX(gx), y, worldZ(gz)); o.rotation.y = rotY; worldGroup.add(o); if (occ) occluders.push(o); if (block && inGrid(gx, gz)) blocked[idx(gx, gz)] = 1; return o }
-function mkLamp() { const g = new THREE.Group(); const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.75, 8), lampMat); p.position.y = 0.37; const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.14), glowMat); arm.position.y = 0.76; g.add(p, arm); g.traverse(m => { if (m.isMesh) m.castShadow = true }); return g }
-function mkHydrant() { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.26, 8), new THREE.MeshStandardMaterial({ color: 0xcc3322, roughness: 0.7 })); m.position.y = 0.13; m.castShadow = true; g.add(m); return g }
-function mkTrash() { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.24, 10), new THREE.MeshStandardMaterial({ color: 0x3f5a48, roughness: 0.8 })); m.position.y = 0.12; m.castShadow = true; g.add(m); return g }
-function mkRail(rotY) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.05), new THREE.MeshStandardMaterial({ color: 0xbcc2c8, roughness: 0.6 })); b.position.y = 0.28; const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.05), lampMat); p1.position.set(-0.45, 0.15, 0); const p2 = p1.clone(); p2.position.x = 0.45; g.add(b, p1, p2); g.rotation.y = rotY; g.traverse(m => { if (m.isMesh) m.castShadow = true }); return g }
+function addObj(o, gx, gz, { block = false, occ = false, y = 0, rotY = 0 } = {}) {
+  o.position.set(worldX(gx), y, worldZ(gz)); o.rotation.y = rotY; worldGroup.add(o); if (occ) occluders.push(o); if (block && inGrid(gx, gz)) blocked[idx(gx, gz)] = 1
+  const sp = o.userData.url ? { t: 'glb', u: o.userData.url } : { t: 'proto', p: o.userData.proto, a: o.userData.protoArg }
+  return track(o, { ...sp, x: o.position.x, y, z: o.position.z, r: rotY, occ, blk: block })
+}
+function mkLamp() { const g = new THREE.Group(); const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.75, 8), lampMat); p.position.y = 0.37; const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.14), glowMat); arm.position.y = 0.76; g.add(p, arm); g.traverse(m => { if (m.isMesh) m.castShadow = true }); g.userData.proto = 'lamp'; return g }
+function mkHydrant() { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.26, 8), new THREE.MeshStandardMaterial({ color: 0xcc3322, roughness: 0.7 })); m.position.y = 0.13; m.castShadow = true; g.add(m); g.userData.proto = 'hydrant'; return g }
+function mkTrash() { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.24, 10), new THREE.MeshStandardMaterial({ color: 0x3f5a48, roughness: 0.8 })); m.position.y = 0.12; m.castShadow = true; g.add(m); g.userData.proto = 'trash'; return g }
+function mkRail(rotY) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.05), new THREE.MeshStandardMaterial({ color: 0xbcc2c8, roughness: 0.6 })); b.position.y = 0.28; const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.05), lampMat); p1.position.set(-0.45, 0.15, 0); const p2 = p1.clone(); p2.position.x = 0.45; g.add(b, p1, p2); g.rotation.y = rotY; g.traverse(m => { if (m.isMesh) m.castShadow = true }); g.userData.proto = 'rail'; g.userData.protoArg = rotY; return g }
+const PROTO = { lamp: () => mkLamp(), hydrant: () => mkHydrant(), trash: () => mkTrash(), crane: () => mkCrane(), rail: (a) => mkRail(a || 0), plank: () => mkPlank() }
+// serializa el mundo editable a specs; deserializa reconstruyendo
+function serializeWorld() { return EDITABLE.filter(o => o.parent).map(o => { const e = o.userData.ed; return { ...e, x: +o.position.x.toFixed(3), y: +o.position.y.toFixed(3), z: +o.position.z.toFixed(3), r: +o.rotation.y.toFixed(4), s: +o.scale.x.toFixed(3) } }) }
+function spawnSpec(e) {
+  let o = null, flat = false
+  if (e.t === 'glb') { o = inst(e.u); if (!o) return null; worldGroup.add(o); if (e.occ) occluders.push(o) }
+  else if (e.t === 'proto') { o = (PROTO[e.p] || PROTO.lamp)(e.a); worldGroup.add(o) }
+  else if (e.t === 'patch') { o = new THREE.Mesh(new THREE.PlaneGeometry(e.w, e.d), new THREE.MeshStandardMaterial({ color: e.c, roughness: 1 })); o.rotation.x = -Math.PI / 2; o.receiveShadow = true; worldGroup.add(o); if (e.pk) groundMeshes.push(o); flat = true }
+  else if (e.t === 'water') { o = addWater(e.sz, e.c, e.y); EDITABLE.pop(); flat = true }
+  else if (e.t === 'grass') { o = bigPlane(e.sz, e.c, e.y, true); EDITABLE.pop(); flat = true }
+  else if (e.t === 'portal') { o = mkPortal(e.to, e.c); worldGroup.add(o); o.position.set(e.x, e.y, e.z); registerPortal(o) }
+  if (!o) return null
+  o.position.set(e.x, e.y, e.z); if (!flat) o.rotation.y = e.r; if (e.s) o.scale.setScalar(e.s)
+  o.userData.ed = { ...e }; EDITABLE.push(o); return o
+}
+function loadWorldSpecs(specs) { for (const e of specs) spawnSpec(e) }
 // decora la vereda (anillo exterior de la manzana) con farol/arbol/banco/hidrante y autos estacionados
 function decorate(lo, hi, lz, hz, opts = {}) {
   const treePool = opts.trees || MODELS.suburbTree
@@ -242,9 +273,10 @@ function buildCity() {
   resetWorld(54, 7); COAST_Z = 46; currentWorld = 'city'
   scene.background.set(0x9fd3ef)
   addWater(420, 0x3a9ad0, -0.22)
-  const landS = worldZ(COAST_Z) - 0.5
-  const lm = new THREE.Mesh(new THREE.PlaneGeometry(GRID + 2, landS - (worldZ(0) - 1)), new THREE.MeshStandardMaterial({ color: 0x9a9a90, roughness: 1 }))
+  const landS = worldZ(COAST_Z) - 0.5, landW = GRID + 2, landD = landS - (worldZ(0) - 1)
+  const lm = new THREE.Mesh(new THREE.PlaneGeometry(landW, landD), new THREE.MeshStandardMaterial({ color: 0x9a9a90, roughness: 1 }))
   lm.rotation.x = -Math.PI / 2; lm.position.set(0, -0.01, (worldZ(0) - 1 + landS) / 2); lm.receiveShadow = true; worldGroup.add(lm); groundMeshes.push(lm)
+  track(lm, { t: 'patch', c: 0x9a9a90, w: landW, d: landD, x: 0, y: -0.01, z: lm.position.z, pk: true })
   const isRoad = (x, z) => inGrid(x, z) && z < COAST_Z && (AVX.has(x) || AVZ.has(z))
   for (let x = 0; x < GRID; x++) for (let z = 0; z < COAST_Z; z++) {
     if (!isRoad(x, z)) continue; roadTile[idx(x, z)] = 1
@@ -596,13 +628,14 @@ function updateCameraFollow() { if (!character) return; camTmp.set(character.pos
 const marker = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.26, 24), new THREE.MeshBasicMaterial({ color: 0x4aa3ff, transparent: true, opacity: 0.9, side: THREE.DoubleSide })); marker.rotation.x = -Math.PI / 2; marker.visible = false; scene.add(marker)
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2()
 function moveTo(cxp, cyp) { ndc.x = (cxp / window.innerWidth) * 2 - 1; ndc.y = -(cyp / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, camera); const hit = raycaster.intersectObjects(groundMeshes)[0]; if (!hit) return; let t = worldToTile(hit.point); if (!inGrid(t.x, t.z)) return; t = nearestWalkable(t.x, t.z); const p = findPath(charTile, t); if (p.length) { path = p; moveTarget = null; marker.position.copy(tileCenter(t.x, t.z)).setY(0.05); marker.visible = true } }
-let downX = 0, downY = 0, downT = 0
+let downX = 0, downY = 0, downT = 0, editMode = false
 canvas.addEventListener('pointerdown', (e) => { if (e.button === 0) { downX = e.clientX; downY = e.clientY; downT = performance.now() } })
-canvas.addEventListener('pointerup', (e) => { if (e.button === 0 && Math.hypot(e.clientX - downX, e.clientY - downY) < 8 && performance.now() - downT < 500) moveTo(e.clientX, e.clientY) })
+canvas.addEventListener('pointerup', (e) => { if (editMode) return; if (e.button === 0 && Math.hypot(e.clientX - downX, e.clientY - downY) < 8 && performance.now() - downT < 500) moveTo(e.clientX, e.clientY) })
 const keys = {}
 window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true }); window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false })
 const fwd = new THREE.Vector3(), rightv = new THREE.Vector3(), moveV = new THREE.Vector3()
 function keyboardMove(dt) {
+  if (editMode) return false
   const up = keys['w'] || keys['arrowup'], dn = keys['s'] || keys['arrowdown'], lf = keys['a'] || keys['arrowleft'], rt = keys['d'] || keys['arrowright']
   if (!(up || dn || lf || rt)) return false
   path = []; moveTarget = null; marker.visible = false
@@ -635,7 +668,15 @@ function checkPortals() { if (switching) return; for (const pt of portals) { if 
 //  Cambio de mundo
 // ============================================================
 const fade = document.getElementById('fade')
-function build(name) { const sp = name === 'pirate' ? buildPirate() : name === 'fantasy' ? buildFantasy() : buildCity(); ensureCharacter(); placeCharacter(sp); updateWorldLabel() }
+function removeObj(o) { if (o.parent) o.parent.remove(o); let i = EDITABLE.indexOf(o); if (i >= 0) EDITABLE.splice(i, 1); i = occluders.indexOf(o); if (i >= 0) occluders.splice(i, 1); if (o.userData.proto === 'portal') { const j = portals.findIndex(p => p.ring === o.children[1]); if (j >= 0) portals.splice(j, 1) } }
+function saveMap() { return { world: currentWorld, grid: GRID, coast: COAST_Z, bg: scene.background.getHex(), spawn: { ...charTile }, specs: serializeWorld() } }
+function loadMap(s) { resetWorld(s.grid, 1); COAST_Z = s.coast; currentWorld = s.world; scene.background.set(s.bg); loadWorldSpecs(s.specs); return s.spawn || { x: (s.grid / 2) | 0, z: (s.grid / 2) | 0 } }
+function loadSaved(name) { try { const s = localStorage.getItem('kintana_map_' + name); return s ? JSON.parse(s) : null } catch { return null } }
+function build(name) {
+  const saved = loadSaved(name)
+  const sp = saved ? loadMap(saved) : (name === 'pirate' ? buildPirate() : name === 'fantasy' ? buildFantasy() : buildCity())
+  ensureCharacter(); placeCharacter(sp); updateWorldLabel(); if (editor) editor.refresh()
+}
 function travel(name) {
   switching = true
   if (fade) fade.classList.add('on')
@@ -672,12 +713,30 @@ function go() {
     failed, zoom: (z) => { camera.zoom = z; camera.updateProjectionMatrix() }, fadedCount: () => faded.size, portals: () => portals.map(p => ({ x: p.x, z: p.z, to: p.to })),
     topdown: () => { controls.maxPolarAngle = Math.PI; camera.position.set(0, 95, 0.01); controls.target.set(0, 0, -2); camera.zoom = 0.62; camera.updateProjectionMatrix(); controls.update() },
   }
+  // Editor sandbox (dev): activar con ?edit en la URL. No aparece al publicar.
+  if (new URLSearchParams(location.search).has('edit')) {
+    editMode = true
+    controls.enablePan = true; controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE }
+    if (character) { character.visible = false; if (avatarRing) avatarRing.visible = false }
+    editor = initEditor({
+      THREE, scene, camera, controls, canvas, renderer,
+      groundMeshes: () => groundMeshes, editable: () => EDITABLE,
+      spawnGlb: (url, x, z, ry) => spawnSpec({ t: 'glb', u: url, x, y: 0, z, r: ry || 0, s: 1 }),
+      spawnProto: (p, x, z, ry) => spawnSpec({ t: 'proto', p, x, y: 0, z, r: ry || 0, s: 1 }),
+      removeObj, worldToTile,
+      world: () => currentWorld, worlds: ['city', 'pirate', 'fantasy'], goWorld: (n) => build(n),
+      saveLocal: () => { localStorage.setItem('kintana_map_' + currentWorld, JSON.stringify(saveMap())) },
+      exportJSON: () => JSON.stringify(saveMap()),
+      importJSON: (str) => { localStorage.setItem('kintana_map_' + currentWorld, str); build(currentWorld) },
+      resetProc: () => { localStorage.removeItem('kintana_map_' + currentWorld); build(currentWorld) },
+    })
+  }
   showScene(); if (!raf) animate()
 }
 let raf = 0, last = performance.now()
 function animate() {
   raf = requestAnimationFrame(animate); const now = performance.now(), dt = Math.min((now - last) / 1000, 0.05); last = now
-  if (mixer) mixer.update(dt); updateCharacter(dt); updateCars(dt); updateWatercraft(dt); animateWater(now / 1000); updateOcclusion(); updateCameraFollow(); controls.update(); renderer.render(scene, camera)
+  if (mixer) mixer.update(dt); if (!editMode) { updateCharacter(dt); updateCameraFollow() } updateCars(dt); updateWatercraft(dt); animateWater(now / 1000); updateOcclusion(); if (editor) editor.tick(); controls.update(); renderer.render(scene, camera)
 }
 window.addEventListener('resize', () => { setFrustum(); renderer.setSize(window.innerWidth, window.innerHeight) })
 start()

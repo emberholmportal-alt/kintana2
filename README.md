@@ -27,6 +27,20 @@ Distritos (isla de 34×34 tiles):
 - **Industria** al sur, junto al **puerto** (lógica logística).
 - **Cementerio** en la periferia noreste.
 
+## Editor sandbox (modo dev)
+
+Herramienta para editar el mapa a mano. Se activa agregando **`?edit`** a la
+URL (ej: `localhost:5173/?edit`). **No aparece al publicar** (sin `?edit`).
+
+- **Paleta por categorías** (750 assets de Kenney) + props/terreno.
+- **Colocar** (click en el suelo), **Seleccionar** (click en un objeto),
+  **mover** (arrastrar), **rotar** (Q/E), **altura** (`[` `]`), **escala**
+  (`,` `.`), **borrar** (Del), **duplicar**, **grilla** on/off.
+- Cámara libre: **botón derecho** rota, **rueda del medio** desplaza, scroll zoom.
+- **Guardar** (localStorage) · **Export/Import JSON** · **Procedural** (reset).
+- El mapa guardado se **carga solo** al abrir sin `?edit`. Para dejarlo como
+  default publicado, exportá el JSON y se commitea en `public/maps/`.
+
 ## Multi-mundo con portales
 
 Arrancás en la **Ciudad**. Pisando un portal viajás a otros mundos:
