@@ -226,7 +226,7 @@ function buildCity() {
   // baranda de promenade en los bordes N/E/O del mapa
   for (let x = 1; x < GRID - 1; x++) { addObj(mkRail(0), x, 0, {}); if (x % 5 === 0) addObj(mkLamp(), x, 0, { block: true }) }
   for (let z = 1; z < COAST_Z; z++) { addObj(mkRail(Math.PI / 2), 0, z, {}); addObj(mkRail(Math.PI / 2), GRID - 1, z, {}) }
-  const BX = [[0, 6], [9, 18], [21, 30], [33, 42], [45, 53]], BZ = [[0, 6], [9, 18], [21, 30], [33, 44]]
+  const BX = [[0, 6], [9, 18], [21, 30], [33, 42], [45, 53]], BZ = [[0, 6], [9, 18], [21, 30], [33, 38]]
   const PLAN = [
     ['resid', 'park', 'commercial', 'arcade', 'cemetery'],
     ['forest', 'resid', 'downtown', 'market', 'resid'],
@@ -262,13 +262,13 @@ function cityBlock(bx, bz, dist) {
 function bldRow(lo, hi, lz, hz, poolFn, dens) { for (let x = lo; x <= hi; x++) for (let z = lz; z <= hz; z++) { if (ringOf(x, z, lo, hi, lz, hz) !== 1) continue; if (rng() < dens) place(poolFn(), x, z, { rotY: faceOut(x, z, lo, hi, lz, hz), block: true, jitter: 0.02, occ: true }) } }
 const inInterior = (x, z, lo, hi, lz, hz) => ringOf(x, z, lo, hi, lz, hz) >= 2
 function cityDowntown(lo, hi, lz, hz) {
-  // menos rascacielos: mayoria torres modulares/comerciales
-  bldRow(lo, hi, lz, hz, () => { const r = rng(); return r < 0.28 ? pick(MODELS.skyscraper, 'sk') : r < 0.65 ? pick(MODELS.modularTower, 'mt') : pick(MODELS.commercial, 'cm') }, 0.85)
+  // menos rascacielos: mayoria edificios comerciales de media altura
+  bldRow(lo, hi, lz, hz, () => rng() < 0.28 ? pick(MODELS.skyscraper, 'sk') : pick(MODELS.commercial, 'cm'), 0.85)
   // interior: plaza limpia con arboles/bancos/faroles alineados
   for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) { if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.nature.tree, 'dtt'), x, z, { block: true }); else if (x % 4 === 1 && z % 4 === 1) addObj(mkLamp(), x, z, { block: true }); else if (x % 3 === 0 && z % 4 === 3) place(MODELS.graveyard.bench, x, z, { rotY: Math.PI / 2, block: true }) }
 }
 function cityCommercial(lo, hi, lz, hz) {
-  bldRow(lo, hi, lz, hz, () => rng() < 0.6 ? pick(MODELS.commercial, 'cm') : pick(MODELS.modularTower, 'mt'), 0.82)
+  bldRow(lo, hi, lz, hz, () => pick(MODELS.commercial, 'cm'), 0.82)
   for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) { if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.nature.tree, 'ctt'), x, z, { block: true }); else if (x % 3 === 1 && z % 3 === 1) addObj(mkLamp(), x, z, { block: true }); else if (x % 4 === 2 && z % 4 === 2) place(MODELS.graveyard.bench, x, z, { block: true }) }
 }
 function cityIndustrial(lo, hi, lz, hz) {
@@ -281,8 +281,8 @@ function cityIndustrial(lo, hi, lz, hz) {
   }
 }
 function cityResidential(lo, hi, lz, hz) {
-  // hilera continua de casas (suburbanas + modulares) mirando a la calle
-  bldRow(lo, hi, lz, hz, () => rng() < 0.6 ? pick(MODELS.house, 'rh') : pick(MODELS.modularHouse, 'mh'), 0.85)
+  // hilera continua de casas mirando a la calle
+  bldRow(lo, hi, lz, hz, () => pick(MODELS.house, 'rh'), 0.85)
   // interior LIMPIO: jardin con arboles alineados (grilla), sin cercas ni junk
   for (let x = lo + 2; x <= hi - 2; x++) for (let z = lz + 2; z <= hz - 2; z++) {
     if (x % 2 === 0 && z % 2 === 0) place(pick(MODELS.suburbTree, 'rit'), x, z, { rotY: rng() * 6.28, block: true })
@@ -322,29 +322,42 @@ function cityForest(lo, hi, lz, hz) {
   scatter(lo, hi, lz, hz, (x, z) => { if (Math.abs(x - cx) <= 1 && Math.abs(z - cz) <= 1) return; const r = rng(); if (r < 0.58) place(pick(MODELS.nature.tree, 'ft'), x, z, { rotY: rng() * 6.28, block: true }); else if (r < 0.7) place(pick(MODELS.nature.rock, 'fr'), x, z, { rotY: rng() * 6.28, block: true }); else if (r < 0.85) place(pick([...MODELS.nature.plant, ...MODELS.nature.mushroom, ...MODELS.nature.stump], 'fp'), x, z, {}) })
   place(MODELS.survival.camp[0], cx, cz, { block: true }); place(pick(MODELS.survival.tent, 'tt'), cx - 1, cz - 1, { rotY: Math.PI / 4, block: true }); place('assets/survival/chest.glb', cx + 1, cz, { block: true }); place('assets/survival/resource-wood.glb', cx + 1, cz + 1, {}); place(pick(MODELS.survival.rock, 'sr'), cx - 1, cz + 1, { block: true })
 }
-function cityCemetery(lo, hi, lz, hz) { // CESPED + denso
+function cityCemetery(lo, hi, lz, hz) { // CESPED + denso + ORDENADO
   groundPatch(lo, hi, lz, hz, 0x6f9a4e, 0.004)
-  const gate = (lo + hi) / 2 | 0
-  scatter(lo, hi, lz, hz, (x, z) => {
-    const edge = x === lo || x === hi || z === lz || z === hz
-    if (edge) { if (z === hz && x === gate) place(MODELS.graveyard.gate, x, z, { rotY: 0 }); else place(MODELS.graveyard.fence, x, z, { rotY: (z === lz || z === hz) ? Math.PI / 2 : 0, block: true }); return }
-    if (z <= lz + 2 && (x - lo) % 2 === 0) { place(pick(MODELS.graveyard.crypt, 'cy'), x, z, { rotY: Math.PI, block: true }); return }
-    if (x === gate) { if (z % 2 === 0) addObj(mkLamp(), x, z, { block: true }); return } // camino central
-    const r = rng()
-    if (r < 0.6) place(pick(MODELS.graveyard.props, 'gr'), x, z, { rotY: Math.PI + (rng() - .5) * .2, block: true })
-    else if (r < 0.72) place(MODELS.graveyard.tree, x, z, { block: true })
-    else if (r < 0.8) place(MODELS.graveyard.bench, x, z, { rotY: Math.PI / 2, block: true })
-  })
+  const gx = gateOf(lo, hi)
+  // reja perimetral + porton al sur
+  for (let x = lo; x <= hi; x++) { place(MODELS.graveyard.fence, x, lz, { rotY: Math.PI / 2, block: true }); if (x === gx) place(MODELS.graveyard.gate, x, hz, {}); else place(MODELS.graveyard.fence, x, hz, { rotY: Math.PI / 2, block: true }) }
+  for (let z = lz + 1; z <= hz - 1; z++) { place(MODELS.graveyard.fence, lo, z, { block: true }); place(MODELS.graveyard.fence, hi, z, { block: true }) }
+  // criptas en la fila del fondo + altar central
+  for (let x = lo + 2; x <= hi - 2; x += 3) if (x !== gx) place(pick(MODELS.graveyard.crypt, 'cy'), x, lz + 2, { rotY: Math.PI, block: true })
+  place('assets/graveyard/altar-stone.glb', gx, lz + 2, { block: true })
+  // grilla ordenada de lapidas + camino central con faroles + arboles/bancos a los lados
+  for (let x = lo + 1; x <= hi - 1; x++) for (let z = lz + 3; z <= hz - 1; z++) {
+    if (x === gx) { if (z % 2 === 1) addObj(mkLamp(), x, z, { block: true }); continue }
+    if (x === lo + 1 || x === hi - 1) { if (z % 3 === 0) place(MODELS.graveyard.tree, x, z, { block: true }); else if (z % 3 === 2) place(MODELS.graveyard.bench, x, z, { rotY: Math.PI / 2, block: true }); continue }
+    if (z % 2 === 1) place(pick(MODELS.graveyard.props, 'gr'), x, z, { rotY: Math.PI, block: true })
+    else if (rng() < 0.25) place(pick([...MODELS.nature.flower], 'gf'), x, z, {})
+  }
 }
 function citySkate(lo, hi, lz, hz) {
   groundPatch(lo, hi, lz, hz, 0x8f8f88, 0.004)
+  const gx = gateOf(lo, hi)
   for (let x = lo + 1; x <= hi - 1; x++) for (let z = lz + 1; z <= hz - 1; z++) place(MODELS.skate.floor, x, z, { y: 0.01 })
-  for (let x = lo; x <= hi; x++) { if (x !== gateOf(lo, hi)) { place(MODELS.graveyard.fence, x, lz, { rotY: Math.PI / 2, block: true }); place(MODELS.graveyard.fence, x, hz, { rotY: Math.PI / 2, block: true }) } }
-  const mz = (lz + hz) / 2 | 0
-  place(MODELS.skate.halfpipe, lo + 1, mz, { rotY: Math.PI / 2, block: true }); place(MODELS.skate.halfpipe, lo + 1, mz + 1, { rotY: Math.PI / 2, block: true })
-  for (let z = lz + 1; z <= hz - 1; z += 2) place(pick(MODELS.skate.rail, 'sr'), (lo + hi) / 2 | 0, z, { block: true })
-  place(MODELS.skate.bowl, hi - 1, lz + 1, { block: true }); place(pick(MODELS.skate.obstacle, 'so'), hi - 1, hz - 1, { block: true }); place(pick(MODELS.skate.obstacle, 'so'), hi - 1, mz, { block: true })
-  for (const [x, z] of [[lo, lz], [hi, hz]]) addObj(mkLamp(), x, z, { block: true })
+  // reja perimetral con entrada al sur
+  for (let x = lo; x <= hi; x++) { place(MODELS.graveyard.fence, x, lz, { rotY: Math.PI / 2, block: true }); if (x !== gx) place(MODELS.graveyard.fence, x, hz, { rotY: Math.PI / 2, block: true }) }
+  for (let z = lz + 1; z <= hz - 1; z++) { place(MODELS.graveyard.fence, lo, z, { block: true }); place(MODELS.graveyard.fence, hi, z, { block: true }) }
+  // half-pipes a la izquierda (2 columnas)
+  for (let z = lz + 2; z <= hz - 2; z += 3) { place(MODELS.skate.halfpipe, lo + 1, z, { rotY: Math.PI / 2, block: true }); place(MODELS.skate.halfpipe, lo + 2, z, { rotY: Math.PI / 2, block: true }) }
+  // interior LLENO: rieles / obstaculos / bowls / escaleras en patron ordenado
+  for (let x = lo + 4; x <= hi - 1; x++) for (let z = lz + 2; z <= hz - 2; z++) {
+    const s = (x - lo) + (z - lz) * 2
+    if (s % 4 === 0) place(pick(MODELS.skate.rail, 'sr'), x, z, { rotY: (s % 8 === 0) ? 0 : Math.PI / 2, block: true })
+    else if (s % 6 === 3) place(pick(MODELS.skate.obstacle, 'so'), x, z, { rotY: rng() < .5 ? 0 : Math.PI / 2, block: true })
+    else if (s % 9 === 5) place(MODELS.skate.bowl, x, z, { block: true })
+    else if (s % 11 === 7) place(MODELS.skate.steps, x, z, { rotY: rng() < .5 ? 0 : Math.PI, block: true })
+  }
+  for (const [x, z] of [[lo, lz], [hi, hz], [lo, hz], [hi, lz]]) addObj(mkLamp(), x, z, { block: true })
+  for (const [x, z] of [[lo + 1, hz - 1], [hi - 1, lz + 1]]) place(MODELS.graveyard.bench, x, z, { block: true })
 }
 const gateOf = (lo, hi) => (lo + hi) / 2 | 0
 // tienda/arcade con paredes, puerta, ventanilla, interior LLENO — se ENTRA
@@ -361,31 +374,40 @@ function buildShop(lo, hi, lz, hz, kit, isArcade) {
     const rotY = z === z0 ? Math.PI : z === z1 ? 0 : x === x0 ? Math.PI / 2 : -Math.PI / 2
     place(corner ? kit.wallCorner : kit.wall, x, z, { rotY, block: true, occ: true })
   }
-  place(kit.cash, winX, z1 - 1, { rotY: Math.PI, block: true })
+  // interior SIN colision (paredes ya bloquean) para recorrer libre
+  place(kit.cash, winX, z1 - 1, { rotY: Math.PI })
   place(kit.employee || MODELS.market.employee, winX, z1 - 2, {})
   if (isArcade) {
-    // pasillos ordenados de maquinas variadas (fila mira al pasillo), cada 3ra fila caminable
-    for (let z = z0 + 1; z <= z1 - 2; z++) { const l = z - z0; if (l % 3 === 0) continue; for (let x = x0 + 1; x <= x1 - 1; x++) { if (x === doorX && z >= z1 - 3) continue; place(pick(kit.machine, 'am' + (l % 3)), x, z, { rotY: l % 3 === 1 ? 0 : Math.PI, block: true }) } }
-    // mostrador de premios: ruleta + premios + tickets + gamer
-    place(MODELS.arcade.wheel, x0 + 1, z1 - 1, { block: true })
-    place('assets/arcade/prizes.glb', x0 + 2, z1 - 1, { block: true })
-    place('assets/arcade/ticket-machine.glb', x1 - 1, z1 - 1, { block: true })
+    for (let z = z0 + 1; z <= z1 - 2; z++) { const l = z - z0; if (l % 3 === 0) continue; for (let x = x0 + 1; x <= x1 - 1; x++) { if (x === doorX && z >= z1 - 3) continue; place(pick(kit.machine, 'am' + (l % 3)), x, z, { rotY: l % 3 === 1 ? 0 : Math.PI }) } }
+    place(MODELS.arcade.wheel, x0 + 1, z1 - 1, {})
+    place('assets/arcade/prizes.glb', x0 + 2, z1 - 1, {})
+    place('assets/arcade/ticket-machine.glb', x1 - 1, z1 - 1, {})
     place('assets/arcade/character-gamer.glb', doorX, z1 - 2, {})
   }
-  else { for (let z = z0 + 1; z <= z1 - 2; z++) for (let x = x0 + 1; x <= x1 - 1; x++) { if ((z - z0) % 2 === 1) place(pick(kit.shelf, 'sh'), x, z, { rotY: Math.PI / 2, block: true }); else if (rng() < 0.5) place(pick(kit.display || kit.shelf, 'ds'), x, z, {}) } for (let x = x0 + 1; x <= x1 - 1; x++) place(kit.freezer, x, z0 + 1, { rotY: Math.PI, block: true }); place(MODELS.market.cart, doorX + 1, z1 + 1, {}); place(MODELS.market.cart, doorX - 1, z1 + 1, {}) }
+  else { for (let z = z0 + 1; z <= z1 - 2; z++) for (let x = x0 + 1; x <= x1 - 1; x++) { if ((z - z0) % 2 === 1) place(pick(kit.shelf, 'sh'), x, z, { rotY: Math.PI / 2 }); else if (rng() < 0.5) place(pick(kit.display || kit.shelf, 'ds'), x, z, {}) } for (let x = x0 + 1; x <= x1 - 1; x++) place(kit.freezer, x, z0 + 1, { rotY: Math.PI }); place(MODELS.market.cart, doorX + 1, z1 + 1, {}); place(MODELS.market.cart, doorX - 1, z1 + 1, {}) }
   decorate(lo, hi, lz, hz, {})
 }
-function cityCoast() { // promenade + puerto + portales
-  const promZ = COAST_Z - 1
-  groundPatch(0, GRID - 1, promZ - 1, promZ, 0xa9a49a, 0.003) // paseo costero (vereda)
-  for (let x = 1; x < GRID - 1; x++) { addObj(mkRail(0), x, promZ, {}); if (x % 4 === 0) addObj(mkLamp(), x, promZ - 1, { block: true }); else if (x % 4 === 2) place(pick(MODELS.nature.tree, 'pmt'), x, promZ - 1, { rotY: rng() * 6.28, block: true }); else if (x % 7 === 1) place(MODELS.graveyard.bench, x, promZ - 1, { block: true }) }
-  for (let x = 8; x < 34; x++) if (rng() < 0.18) { const st = 1 + Math.floor(rng() * 2); for (let s = 0; s < st; s++) place(pick(MODELS.port.container, 'ct'), x, promZ - 2, { y: s * 0.42, rotY: rng() < 0.5 ? 0 : Math.PI / 2, block: s === 0, occ: s === 0 }) }
-  for (const px of [14, 26]) for (let d = 0; d < 4; d++) { const gz = COAST_Z + d; const pl = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, 1.02), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 1 })); pl.position.set(worldX(px), -0.02, worldZ(gz)); pl.castShadow = pl.receiveShadow = true; worldGroup.add(pl); if (inGrid(px, gz)) blocked[idx(px, gz)] = 0 }
-  const s1 = placeW(MODELS.port.ships[0], worldX(4), worldZ(GRID + 4), { y: -0.15, rotY: Math.PI / 2 }); if (s1) watercraft.push({ o: s1, vx: 0.5 })
-  const s2 = placeW(MODELS.port.ships[1] || MODELS.port.ships[0], worldX(30), worldZ(GRID + 7), { y: -0.15, rotY: Math.PI / 2 }); if (s2) watercraft.push({ o: s2, vx: 0.35 })
-  const b1 = placeW(pick(MODELS.port.boats, 'pb'), worldX(26), worldZ(COAST_Z + 2), { y: -0.12, rotY: -Math.PI / 2 }); if (b1) watercraft.push({ o: b1, vx: -0.3 })
-  for (let i = 0; i < 5; i++) place(pick(MODELS.port.buoy, 'bu'), 6 + i * 6, COAST_Z + 3, { y: -0.08 })
-  addPortal(14, COAST_Z + 3, 'pirate', 0x7a5cff)
+function mkCrane() { const g = new THREE.Group(); const y = new THREE.MeshStandardMaterial({ color: 0xf0c040, roughness: 0.6 }); const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.5), lampMat); base.position.y = 0.06; const mast = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.7, 0.14), y); mast.position.y = 0.9; const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.14), y); arm.position.set(0.55, 1.6, 0); const cbl = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.55, 0.03), lampMat); cbl.position.set(1.2, 1.32, 0); g.add(base, mast, arm, cbl); g.traverse(m => { if (m.isMesh) m.castShadow = true }); return g }
+function cityCoast() { // PUERTO: promenade ancho + patio de containers + varios muelles + portales
+  const p0 = COAST_Z - 7, p1 = COAST_Z - 1 // paseo z 39..45 (ancho, caminable)
+  groundPatch(0, GRID - 1, p0, p1, 0xa4a096, 0.003)
+  // patio de containers ORDENADO (con pasillos), sin tapar avenidas
+  for (let x = 4; x <= 24; x++) { if (AVX.has(x) || x % 3 === 0) continue; for (let z = p0; z <= p0 + 2; z++) { const st = 1 + (x % 2); for (let s = 0; s < st; s++) place(pick(MODELS.port.container, 'ct'), x, z, { y: s * 0.42, rotY: 0, block: s === 0, occ: s === 0 }) } }
+  // gruas + pilas de carga
+  addObj(mkCrane(), 12, p0 + 1, { block: true }); addObj(mkCrane(), 16, p0 + 3, { block: true })
+  for (let x = 28; x <= 42; x += 3) if (!AVX.has(x)) place(pick(MODELS.port.pile, 'pl'), x, p0 + 1, { block: true })
+  // mobiliario del paseo (sin tapar el borde)
+  for (let x = 1; x < GRID - 1; x++) { if (AVX.has(x)) continue; if (x % 5 === 0) addObj(mkLamp(), x, p1, { block: true }); else if (x % 5 === 2) place(pick(MODELS.nature.tree, 'pmt'), x, p1, { rotY: rng() * 6.28, block: true }); else if (x % 7 === 3) place(MODELS.graveyard.bench, x, p1 - 1, { block: true }) }
+  // VARIOS muelles de madera (accesibles desde el paseo) hacia el agua
+  const piers = [10, 22, 34, 46]
+  for (const px of piers) { for (let d = 0; d < 6; d++) { const gz = COAST_Z + d; for (const ox of [px, px + 1]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.12, 1.02), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 1 })); pl.position.set(worldX(ox), -0.02, worldZ(gz)); pl.castShadow = pl.receiveShadow = true; worldGroup.add(pl); if (inGrid(ox, gz)) blocked[idx(ox, gz)] = 0 } } for (let d = 0; d < 6; d++) addObj(mkRail(Math.PI / 2), px - 0.5 | 0, COAST_Z + d, {}) }
+  // barcos amarrados + moviles
+  for (let i = 0; i < 4; i++) { const b = placeW(pick(MODELS.port.boats, 'pb' + i), worldX(piers[i] + 3), worldZ(COAST_Z + 2), { y: -0.12, rotY: Math.PI / 2 }); if (b) watercraft.push({ o: b, vx: 0.15 + rng() * 0.2 }) }
+  const s1 = placeW(MODELS.port.ships[0], worldX(4), worldZ(GRID + 5), { y: -0.15, rotY: Math.PI / 2 }); if (s1) watercraft.push({ o: s1, vx: 0.5 })
+  const s2 = placeW(MODELS.port.ships[1] || MODELS.port.ships[0], worldX(30), worldZ(GRID + 9), { y: -0.15, rotY: Math.PI / 2 }); if (s2) watercraft.push({ o: s2, vx: 0.35 })
+  for (let i = 0; i < 6; i++) place(pick(MODELS.port.buoy, 'bu'), 6 + i * 7, COAST_Z + 4, { y: -0.08 })
+  // portal pirata al final del muelle central; portal fantasy en el bosque (NO)
+  addPortal(22, COAST_Z + 5, 'pirate', 0x7a5cff)
   addPortal(3, 3, 'fantasy', 0x2fbf6a)
 }
 
